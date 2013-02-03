@@ -1,13 +1,19 @@
 package com.github.httprelay;
 
+import com.github.httprelay.service.NoRedirectStrategy;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.nio.client.DefaultHttpAsyncClient;
-import org.apache.http.nio.client.HttpAsyncClient;
+import org.apache.http.impl.nio.conn.PoolingClientAsyncConnectionManager;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.nio.conn.ClientAsyncConnectionManager;
+import org.apache.http.nio.reactor.IOReactorExceptionHandler;
 import org.apache.http.params.CoreConnectionPNames;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -21,7 +27,27 @@ public class AsyncHttpClientTest {
 
     @Test
     public void testAsyncHttpClient() throws Exception {
-        HttpAsyncClient httpclient = new DefaultHttpAsyncClient();
+        IOReactorExceptionHandler handler = new IOReactorExceptionHandler() {
+            @Override
+            public boolean handle(IOException ex) {
+                ex.printStackTrace();
+                return false;
+            }
+
+            @Override
+            public boolean handle(RuntimeException ex) {
+                ex.printStackTrace();
+                return false;
+            }
+        };
+        IOReactorConfig config = new IOReactorConfig();
+        DefaultConnectingIOReactor defaultioreactor = new DefaultConnectingIOReactor(config);
+        defaultioreactor.setExceptionHandler(handler);
+
+        ClientAsyncConnectionManager connmgr = new PoolingClientAsyncConnectionManager(defaultioreactor);
+
+        DefaultHttpAsyncClient httpclient = new DefaultHttpAsyncClient(connmgr);
+        httpclient.setRedirectStrategy(new NoRedirectStrategy());
         httpclient.getParams()
                 .setIntParameter(CoreConnectionPNames.SO_TIMEOUT, 3000)
                 .setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 3000)
@@ -29,6 +55,7 @@ public class AsyncHttpClientTest {
                 .setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true);
 
         httpclient.start();
+
         try {
             HttpGet[] requests = new HttpGet[] {
                     new HttpGet("http://www.apache.org/"),

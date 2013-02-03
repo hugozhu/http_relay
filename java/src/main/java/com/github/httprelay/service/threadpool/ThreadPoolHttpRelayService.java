@@ -14,7 +14,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 
 import java.io.*;
+import java.net.SocketTimeoutException;
 import java.net.URI;
+
 import java.util.concurrent.*;
 
 /**
@@ -24,8 +26,7 @@ import java.util.concurrent.*;
  */
 public class ThreadPoolHttpRelayService extends BaseHttpRelayService {
     final DefaultHttpClient httpclient;
-    ExecutorService pool;
-
+    ConcurrentHashMap<String, Worker[]> queueMap = new ConcurrentHashMap<String, Worker[]>();
 
     public ThreadPoolHttpRelayService() {
         SchemeRegistry schemeRegistry = new SchemeRegistry();
@@ -38,22 +39,50 @@ public class ThreadPoolHttpRelayService extends BaseHttpRelayService {
         httpclient = new DefaultHttpClient(cm);
         configHttpCLientParams(httpclient.getParams());
         httpclient.setRedirectStrategy(new NoRedirectStrategy());
+    }
 
-        pool = new ThreadPoolExecutor(0, maxTotal,
-                60L, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>());
+    public Worker getWorker(String host, int retryTimes) {
+        Worker[] works = queueMap.get(host);
+        if (works == null) {
+            works = new Worker[this.maxPerRoute];
+            for (int i=0;i<works.length;i++) {
+                works[i] = new Worker();
+            }
+            Worker[] exist = queueMap.putIfAbsent(host,works);
+            if (exist!=null) {
+                works = exist;
+            } else {
+                for (int i=0;i<works.length;i++) {
+                    works[i].start();
+                }
+            }
+        }
+        if (retryTimes>0) {
+            return works[works.length-1];
+        } else {
+            int min = Integer.MAX_VALUE;
+            int index = 0;
+            for (int i=0;i<works.length-1;i++) {
+                if (works[i].getPending() < min) {
+                    min = works[i].getPending();
+                    index = i;
+                }
+            }
+            return works[index];
+        }
     }
 
     @Override
-    public Future send(URI uri, String postdata, final Callback callback) throws IOException {
+    public void send(final URI uri, final String postdata, final Callback callback) throws IOException {
         try {
             final HttpUriRequest request = createRequest(uri,postdata);
-
-            return pool.submit(new Runnable() {
+            Runnable task = new Runnable() {
+                int retry = 0;
                 @Override
                 public void run() {
+                    HttpResponse response = null;
                     try {
-                        HttpResponse response = httpclient.execute(request);
+                        response = httpclient.execute(request);
                         HttpEntity entity = response.getEntity();
                         if (entity != null) {
                             ByteArrayOutputStream output = new ByteArrayOutputStream(avgResponseSize);
@@ -72,8 +101,7 @@ public class ThreadPoolHttpRelayService extends BaseHttpRelayService {
                                 }
                                 callback.run(true, null, output.toString("UTF-8"));
                             } catch (Exception e) {
-                                callback.run(false, null, request.getRequestLine()+": "+e.getMessage());
-                                return;
+                                callback.run(false, null, uri+": " + e.getClass()+" "+e.getMessage());
                             } finally {
                                 try {
                                     response.getEntity().getContent().close();
@@ -82,11 +110,19 @@ public class ThreadPoolHttpRelayService extends BaseHttpRelayService {
                                 }
                             }
                         }
-                    } catch (IOException e) {
-                        callback.run(false, null, request.getRequestLine() + ": " + e.getMessage());
+                    } catch (SocketTimeoutException e) {
+                        //timeout error: can be retried
+                        if (this.retry>=3) {
+                            callback.run(false, null, uri + ": timed out after " + this.retry+" retries");
+                        } else {
+                            getWorker(uri.getHost(),++this.retry).add(this);
+                        }
+                    } catch (Exception e) {
+                        callback.run(false, null, uri + ": " + e.getClass()+" "+e.getMessage());
                     }
                 }
-            });
+            };
+            getWorker(uri.getHost(),0).add(task);
         } catch (RejectedExecutionException e) {
             throw new IOException(e.getMessage());
         }

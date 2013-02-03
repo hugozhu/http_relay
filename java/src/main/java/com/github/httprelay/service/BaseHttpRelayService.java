@@ -18,7 +18,7 @@ import java.net.URI;
 public abstract class BaseHttpRelayService implements HttpRelayService {
     protected int maxResposneBytes = 1024*5;
     protected int avgResponseSize = 256;
-    protected int timeout = 10000; //10 seconds
+    protected int timeout = 100; //10 seconds
     protected int maxPerRoute = 10;
     protected int maxTotal = 1000;
 
@@ -39,6 +39,7 @@ public abstract class BaseHttpRelayService implements HttpRelayService {
             } else {
                 request = new HttpGet(uri);
             }
+            request.setHeader("User-Agent","Mozilla/5.0 (iPhone; U; CPU like Mac OS X; en) AppleWebKit/420+ (KHTML, like Gecko) Version/3.0 Mobile/1A543a Safari/419.3");
             return request;
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();

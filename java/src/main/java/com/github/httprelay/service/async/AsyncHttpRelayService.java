@@ -73,10 +73,10 @@ public class AsyncHttpRelayService extends BaseHttpRelayService {
     }
 
     @Override
-    public Future send(URI uri, String postdata, final Callback callback) throws IOException {
+    public void send(URI uri, String postdata, final Callback callback) throws IOException {
         final HttpUriRequest request = createRequest(uri,postdata);
         HttpAsyncResponseConsumer<HttpResponse> consumer = new MaxBytesLimitedAsyncResponseConsumer(maxResposneBytes,timeout);
-        return httpclient.execute(HttpAsyncMethods.create(request), consumer, new FutureCallback<HttpResponse>() {
+        httpclient.execute(HttpAsyncMethods.create(request), consumer, new FutureCallback<HttpResponse>() {
             public void completed(final HttpResponse response) {
                 if (response.getStatusLine().getStatusCode() != 200) {
                     callback.run(false, null, "response status code:"+response.getStatusLine().getStatusCode());

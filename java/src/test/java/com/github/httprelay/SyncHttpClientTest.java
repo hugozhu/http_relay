@@ -1,5 +1,6 @@
 package com.github.httprelay;
 
+import com.github.httprelay.util.SecureDnsResolver;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;

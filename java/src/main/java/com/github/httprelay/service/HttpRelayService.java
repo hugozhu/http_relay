@@ -2,7 +2,6 @@ package com.github.httprelay.service;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.concurrent.Future;
 
 
 /**
@@ -11,8 +10,9 @@ import java.util.concurrent.Future;
  * <ul>功能要求：
  *     <li>不支持跳转</li>
  *     <li>对域名解析需要校验</li>
+ *     <li>对返回的数据需要校验，数据量大小也要检查，如不超过10K</li>
  *     <li>对于每个API允许的网络连接数有一定限制，如：10</li>
- *     <li>对于单机的总共网络连接数一定限制，如：100K</li>
+ *     <li>对于单机的总共网络连接数一定限制，如：10000</li>
  *     <li>对相同的API调用尽量按次序执行</li>
  *     <li>每次调用有一定的超时设置：如10秒，失败后排入失败队列，在15分钟内重试三次，分别是1分钟，5分钟，15分钟</li>
  * </ul>
@@ -36,5 +36,5 @@ public interface HttpRelayService {
      * @return
      * @throws IOException
      */
-    public Future send(URI uri, String postdata, Callback callback) throws IOException;
+    public void send(URI uri, String postdata, Callback callback) throws IOException;
 }
