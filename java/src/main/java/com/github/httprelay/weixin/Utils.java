@@ -1,5 +1,12 @@
 package com.github.httprelay.weixin;
 
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -31,5 +38,24 @@ public class Utils {
                     Integer.toString( ( b[i] & 0xff ) + 0x100, 16).substring( 1 );
         }
         return result;
+    }
+
+    public static ResponseMessage parseResponseXml(String xml) {
+        ResponseMessage msg = null;
+        try {
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            dbFactory.setValidating(false);
+            dbFactory.setIgnoringComments(true);
+            Document doc = dBuilder.parse(xml);
+            System.err.println("----"+doc);
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return msg;
     }
 }

@@ -46,4 +46,18 @@ public abstract class BaseHttpRelayService implements HttpRelayService {
             return null;
         }
     }
+
+    public String parseCharset(String contentType) {
+        if (contentType == null || contentType.length()<10) {
+            return "GBK"; //default to GBK
+        }
+        int pos = contentType.lastIndexOf("=");
+        if (pos > -1) {
+            String charset = contentType.substring(pos).toUpperCase();
+            if (charset.equals("UTF-8")||charset.equals("UTF8")) {
+                return "UTF-8";
+            }
+        }
+        return "GBK";
+    }
 }

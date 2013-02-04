@@ -16,6 +16,12 @@ public class SecureDnsResolver implements DnsResolver {
 
     @Override
     public InetAddress[] resolve(String hostname) throws UnknownHostException{
-        return new InetAddress[]{InetAddress.getByName(hostname)};
+        InetAddress[] addresses  = new InetAddress[]{InetAddress.getByName(hostname)};
+        for (InetAddress addr: addresses) {
+            if(addr.isAnyLocalAddress()||addr.isLoopbackAddress()) {
+                throw new IllegalStateException(addr+" is not a valid api address");
+            }
+        }
+        return addresses;
     }
 }
