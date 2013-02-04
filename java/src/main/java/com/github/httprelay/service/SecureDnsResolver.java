@@ -1,4 +1,4 @@
-package com.github.httprelay.util;
+package com.github.httprelay.service;
 
 import org.apache.http.conn.DnsResolver;
 

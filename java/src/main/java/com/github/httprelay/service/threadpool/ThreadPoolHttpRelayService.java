@@ -3,7 +3,7 @@ package com.github.httprelay.service.threadpool;
 import com.github.httprelay.service.BaseHttpRelayService;
 import com.github.httprelay.service.Callback;
 import com.github.httprelay.service.NoRedirectStrategy;
-import com.github.httprelay.util.SecureDnsResolver;
+import com.github.httprelay.service.SecureDnsResolver;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -20,6 +20,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.logging.Logger;
 
 /**
  * User: hugozhu
@@ -28,12 +29,13 @@ import java.util.concurrent.*;
  */
 public class ThreadPoolHttpRelayService extends BaseHttpRelayService {
     final DefaultHttpClient httpclient;
+    Logger logger = Logger.getLogger(this.getClass().getName());
 
     //调用者，根据调用地址分区
     ConcurrentHashMap<String, Worker[]> queueMap = new ConcurrentHashMap<String, Worker[]>();
 
     //失败的调用入延迟队列，单线程重试
-    DelayedWorker delayedWorker = new DelayedWorker();
+    DelayedWorker delayedWorker = new DelayedWorker(1,10000);
 
     public ThreadPoolHttpRelayService() {
         SchemeRegistry schemeRegistry = new SchemeRegistry();
@@ -47,7 +49,6 @@ public class ThreadPoolHttpRelayService extends BaseHttpRelayService {
         configHttpCLientParams(httpclient.getParams());
         httpclient.setRedirectStrategy(new NoRedirectStrategy());
 
-        delayedWorker.start();
     }
 
     public Worker getWorker(String host) {
@@ -125,7 +126,10 @@ public class ThreadPoolHttpRelayService extends BaseHttpRelayService {
                         if (this.retry>=3) {
                             callback.run(false, null, uri + ": timed out after " + this.retry+" retries"+ ": " + e.getClass()+" "+e.getMessage());
                         } else {
-                            delayedWorker.add(this, ++this.retry);
+                            logger.info(this.retry+" retry "+uri);
+                            if (!delayedWorker.add(this, ++this.retry)) {
+                                callback.run(false, null, uri +  ": " + e.getClass()+" "+e.getMessage());
+                            }
                         }
                     } catch (Exception e) {
                         callback.run(false, null, uri + ": " + e.getClass()+" "+e.getMessage());
