@@ -30,6 +30,7 @@ public class WeixinRelayTest {
                     sb.append(response);
                     try {
                         ResponseMessage msg = Utils.parseResponseXml(response);
+                        System.out.println(msg.encodeToXml());
                         //call downstream api (async?)
                     } catch (Exception e) {
                         e.printStackTrace();
