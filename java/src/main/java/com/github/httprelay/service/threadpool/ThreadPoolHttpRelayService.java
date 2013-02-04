@@ -15,7 +15,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 
 import java.io.*;
-import java.net.SocketTimeoutException;
 import java.net.URI;
 
 import java.util.HashMap;
@@ -47,12 +46,14 @@ public class ThreadPoolHttpRelayService extends BaseHttpRelayService {
         httpclient = new DefaultHttpClient(cm);
         configHttpCLientParams(httpclient.getParams());
         httpclient.setRedirectStrategy(new NoRedirectStrategy());
+
+        delayedWorker.start();
     }
 
     public Worker getWorker(String host) {
         Worker[] works = queueMap.get(host);
         if (works == null) {
-            works = new Worker[this.maxPerRoute];
+            works = new Worker[this.maxPerRoute-1];
             for (int i=0;i<works.length;i++) {
                 works[i] = new Worker();
             }
@@ -119,10 +120,10 @@ public class ThreadPoolHttpRelayService extends BaseHttpRelayService {
                                 }
                             }
                         }
-                    } catch (SocketTimeoutException e) {
+                    } catch (IOException e) {
                         //timeout error: can be retried
                         if (this.retry>=3) {
-                            callback.run(false, null, uri + ": timed out after " + this.retry+" retries");
+                            callback.run(false, null, uri + ": timed out after " + this.retry+" retries"+ ": " + e.getClass()+" "+e.getMessage());
                         } else {
                             delayedWorker.add(this, ++this.retry);
                         }

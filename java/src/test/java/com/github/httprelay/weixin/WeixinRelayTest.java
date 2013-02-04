@@ -28,8 +28,14 @@ public class WeixinRelayTest {
             public void run(boolean success, Map<String, String> headers, final String response) {
                 if (success) {
                     sb.append(response);
-                    ResponseMessage msg = Utils.parseResponseXml(response);
-                    //call downstream api (async?)
+                    try {
+                        ResponseMessage msg = Utils.parseResponseXml(response);
+                        //call downstream api (async?)
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.err.println(response);
                 }
                 countDown.countDown();
             }

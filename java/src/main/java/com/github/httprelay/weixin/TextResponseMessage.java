@@ -15,4 +15,14 @@ public class TextResponseMessage extends ResponseMessage {
     public void setContent(String content) {
         this.content = content;
     }
+
+    @Override
+    public String getMessageType() {
+        return "image";
+    }
+
+    @Override
+    public String encodeContentToXml() {
+        return "<Content><![CDATA["+content+"]]></Content>";
+    }
 }

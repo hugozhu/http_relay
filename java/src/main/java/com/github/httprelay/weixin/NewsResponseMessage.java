@@ -27,11 +27,12 @@ public class NewsResponseMessage extends ResponseMessage {
         this.articles = articles;
     }
 
-    public class Article {
+    public static class Article {
         private String title;
         private String description;
         private String picUrl;
         private String url;
+
 
         public String getTitle() {
             return title;
@@ -64,5 +65,26 @@ public class NewsResponseMessage extends ResponseMessage {
         public void setUrl(String url) {
             this.url = url;
         }
+    }
+
+    @Override
+    public String getMessageType() {
+        return "news";
+    }
+
+    @Override
+    public String encodeContentToXml() {
+        StringBuilder sb = new StringBuilder("<ArticleCount>"+articleCount+"</ArticleCount>");
+        sb.append("<Articles>");
+        for (Article article: articles) {
+            sb.append("<item>");
+            sb.append("<Title><![CDATA["+article.title+"]]></Title>");
+            sb.append("<Description><![CDATA["+article.description+"]]></Description>");
+            sb.append("<PicUrl><![CDATA["+article.picUrl+"]]></PicUrl>");
+            sb.append("<Url><![CDATA["+article.url+"]]></Url>");
+            sb.append("</item>");
+        }
+        sb.append("</Articles>");
+        return sb.toString();
     }
 }
