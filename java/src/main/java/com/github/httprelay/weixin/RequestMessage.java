@@ -11,6 +11,7 @@ public abstract class RequestMessage implements Serializable {
     private String toUsername;
     private String fromUsername;
     private int createTime;
+    private long msgId;
 
     public RequestMessage(String to,String from, int time) {
         this.toUsername = to;
@@ -42,6 +43,14 @@ public abstract class RequestMessage implements Serializable {
         this.createTime = createTime;
     }
 
+    public long getMsgId() {
+        return msgId;
+    }
+
+    public void setMsgId(long msgId) {
+        this.msgId = msgId;
+    }
+
     public abstract String getMessageType();
 
     public abstract String encodeContentToXml();
@@ -61,6 +70,9 @@ public abstract class RequestMessage implements Serializable {
         sb.append(getMessageType());
         sb.append("</MsgType>");
         sb.append(encodeContentToXml());
+        sb.append("<MsgId>");
+        sb.append(getMsgId());
+        sb.append("</MsgId>");
         sb.append("</xml>");
         return sb.toString();
     }

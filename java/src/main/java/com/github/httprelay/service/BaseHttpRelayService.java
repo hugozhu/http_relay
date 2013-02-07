@@ -18,7 +18,7 @@ import java.net.URI;
 public abstract class BaseHttpRelayService implements HttpRelayService {
     protected int maxResposneBytes = 1024*5;
     protected int avgResponseSize = 256;
-    protected int timeout = 10; //milliseconds
+    protected int timeout = 5000; //milliseconds
     protected int maxPerRoute = 10;
     protected int maxTotal = 1000;
 

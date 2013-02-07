@@ -44,4 +44,33 @@ public class WeixinRelayTest {
         countDown.await();
         assertTrue(sb.length()>0);
     }
+
+    @Test
+    public void testVoiceRequest() throws Exception {
+        final String url = "http://go.myalert.info/weixin.php?" + Utils.querySignature("weixinsearch",(int)(System.currentTimeMillis()/1000l),"Hello");
+        ThreadPoolHttpRelayService service = new ThreadPoolHttpRelayService();
+        final RequestMessage msg = new VoiceRequestMessage("myalert","hugozhu", (int) (System.currentTimeMillis()/1000l),"phone");
+        final CountDownLatch countDown = new CountDownLatch(1);
+        final StringBuffer sb = new StringBuffer();
+        service.send(new URI(url), msg.encodeToXml() , new Callback() {
+            @Override
+            public void run(boolean success, Map<String, String> headers, final String response) {
+                if (success) {
+                    sb.append(response);
+                    try {
+                        ResponseMessage msg = Utils.parseResponseXml(response);
+                        System.out.println(msg.encodeToXml());
+                        //call downstream api (async?)
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.err.println(response);
+                }
+                countDown.countDown();
+            }
+        });
+        countDown.await();
+        assertTrue(sb.length()>0);
+    }
 }

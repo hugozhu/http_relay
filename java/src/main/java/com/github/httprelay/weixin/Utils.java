@@ -135,7 +135,7 @@ public class Utils {
                 }
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Response XML invalid: "+e.getMessage());
+            throw new IllegalStateException("Response XML invalid: "+e.getMessage()+"\n"+xml);
         }
         return msg;
     }
