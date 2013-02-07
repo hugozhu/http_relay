@@ -6,11 +6,8 @@ import com.github.httprelay.service.NoRedirectStrategy;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.concurrent.FutureCallback;
-import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.nio.client.DefaultHttpAsyncClient;
 import org.apache.http.impl.nio.conn.PoolingClientAsyncConnectionManager;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
@@ -28,7 +25,6 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Future;
 
 /**
  * User: hugozhu
@@ -81,10 +77,10 @@ public class AsyncHttpRelayService extends BaseHttpRelayService {
                 if (response.getStatusLine().getStatusCode() != 200) {
                     callback.run(false, null, "response status code:"+response.getStatusLine().getStatusCode());
                 }
-                ByteArrayOutputStream output = new ByteArrayOutputStream(avgResponseSize);
+                ByteArrayOutputStream output = new ByteArrayOutputStream(avgResponseBytes);
                 try {
                     InputStream in = response.getEntity().getContent();
-                    byte[] buff = new byte[avgResponseSize];
+                    byte[] buff = new byte[avgResponseBytes];
                     int n;
                     while ( (n = in.read(buff)) !=-1) {
                         output.write(buff,0,n);

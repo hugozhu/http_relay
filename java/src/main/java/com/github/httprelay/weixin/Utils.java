@@ -60,16 +60,20 @@ public class Utils {
             String content=null;
             int articleCount=0;
             Node articlesNode=null;
+            Node musicNode = null;
             for (int i=0;i<children.getLength();i++) {
                 Node node = children.item(i);
                 if (node.getNodeType() == Document.ELEMENT_NODE) {
                     if ("MsgType".equals(node.getNodeName()) && msg==null) {
-                        if ("news".equals(node.getTextContent().trim())) {
+                        String msgType = node.getTextContent().trim();
+                        if ("news".equals(msgType)) {
                             msg = new NewsResponseMessage();
-                        } else if ("text".equals(node.getTextContent().trim())) {
+                        } else if ("text".equals(msgType)) {
                             msg = new TextResponseMessage();
+                        } else if ("music".equals(msgType)) {
+                            msg = new MusicResponseMessage();
                         } else {
-                            throw new IllegalArgumentException(node.getTextContent()+" is not a valid xml");
+                            throw new IllegalArgumentException(node.getTextContent()+" is not a valid msg type");
                         }
                     }
 
@@ -95,6 +99,10 @@ public class Utils {
                     if ("Articles".equals(node.getNodeName())) {
                         articlesNode = node;
                     }
+
+                    if ("Music".equals(node.getNodeName())) {
+                        musicNode = node;
+                    }
                 }
             }
             msg.setToUsername(toUsername);
@@ -102,6 +110,25 @@ public class Utils {
             msg.setCreateTime(createTime);
             if (msg instanceof TextResponseMessage) {
                 ((TextResponseMessage) msg).setContent(content);
+            }
+            if (msg instanceof MusicResponseMessage) {
+                NodeList items = musicNode.getChildNodes();
+                for (int i=0;i<items.getLength();i++) {
+                    if (items.item(i).getNodeType() != Document.ELEMENT_NODE) {
+                        continue;
+                    }
+                    Node node = items.item(i);
+                    String name = node.getNodeName();
+                    if ("Title".equals(name)) {
+                        ((MusicResponseMessage) msg).setTitle(node.getTextContent());
+                    } else if ("Description".equals(name)) {
+                        ((MusicResponseMessage) msg).setDescription(node.getTextContent());
+                    } else if ("MusicUrl".equals(name)) {
+                        ((MusicResponseMessage) msg).setMusicUrl(node.getTextContent());
+                    } else if ("HQMusicUrl".equals(name)) {
+                        ((MusicResponseMessage) msg).setHqMusicUrl(node.getTextContent());
+                    }
+                }
             }
             if (msg instanceof NewsResponseMessage) {
                 ((NewsResponseMessage) msg).setArticleCount(articleCount);
@@ -120,14 +147,11 @@ public class Utils {
                         }
                         if ("Title".equals(node.getNodeName())) {
                             article.setTitle(node.getTextContent());
-                        }
-                        if ("Description".equals(node.getNodeName())) {
+                        } else if ("Description".equals(node.getNodeName())) {
                             article.setDescription(node.getTextContent());
-                        }
-                        if ("PicUrl".equals(node.getNodeName())) {
+                        } else if ("PicUrl".equals(node.getNodeName())) {
                             article.setPicUrl(node.getTextContent());
-                        }
-                        if ("Url".equals(node.getNodeName())) {
+                        } else if ("Url".equals(node.getNodeName())) {
                             article.setUrl(node.getTextContent());
                         }
                     }

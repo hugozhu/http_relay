@@ -91,10 +91,10 @@ public class ThreadPoolHttpRelayService extends BaseHttpRelayService {
                         response = httpclient.execute(request);
                         HttpEntity entity = response.getEntity();
                         if (entity != null) {
-                            ByteArrayOutputStream output = new ByteArrayOutputStream(avgResponseSize);
+                            ByteArrayOutputStream output = new ByteArrayOutputStream(avgResponseBytes);
                             try {
                                 InputStream in = response.getEntity().getContent();
-                                byte[] buff = new byte[avgResponseSize];
+                                byte[] buff = new byte[avgResponseBytes];
                                 int n;
                                 int total = 0;
                                 while ( (n = in.read(buff)) !=-1) {
